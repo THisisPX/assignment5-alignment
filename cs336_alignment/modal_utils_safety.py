@@ -22,7 +22,7 @@ from cs336_alignment.modal_utils import (
 app = modal.App(f"cs336-a5-supplement-{SUNET_ID}")
 
 SHARED_VOLUME_NAME = "cs336-a5-supplement"
-SHARED_VOLUME_ENVIRONMENT = "cs336-shcao"
+SHARED_VOLUME_ENVIRONMENT = "cs336-shared-data"
 SHARED_VOLUME_MOUNT_PATH = "/mnt/cs336-a5-supplement"
 RESULTS_VOLUME_NAME = f"cs336-a5-supplement-results-{SUNET_ID}"
 RESULTS_VOLUME_MOUNT_PATH = "/mnt/cs336-a5-supplement-results"
