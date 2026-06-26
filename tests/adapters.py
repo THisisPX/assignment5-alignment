@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from typing import Any, Callable, Literal
 
 import torch
@@ -32,7 +33,7 @@ def run_tokenize_prompt_and_output(
             concatenated tokenized prompt and output strings. Then the returned
             dictionary should have the following keys:
 
-            input_ids
+                
                 torch.Tensor of shape
                 (batch_size, max(prompt_and_output_lens) - 1): the tokenized
                 prompt and output strings, with the final token sliced off.
@@ -46,8 +47,27 @@ def run_tokenize_prompt_and_output(
                 with labels, with value 1 where the corresponding label token
                 is part of the response and 0 otherwise.
     """
-    raise NotImplementedError
+    # raise NotImplementedError
+    batch_size = len(prompt_strs)
+    input_ids = []
+    labels = []
+    response_masks = [] 
+    for prompt, response in zip(prompt_strs, output_strs):
+        assert isinstance(prompt, str), "Prompt must be a string"
+        assert isinstance(response, str), "Response must be a string"
+        full = prompt + response
+        prompt_tokens = tokenizer.encode(prompt)  # Check if tokenization works
+        response_tokens = tokenizer.encode(response)  # Check if tokenization works
+        full_tokens = tokenizer.encode(full)  # Check if tokenization works
+        input_ids.append(full_tokens[:-1])  # All but last token
+        labels.append(full_tokens[1:])  # All but first token
+        response_masks.append([0] * (len(prompt_tokens)-1 ) + [1] * len(response_tokens) )  # Initialize response mask
 
+    return  {
+            "input_ids" :torch.tensor(input_ids,),
+            "labels":torch.tensor(labels),
+            "response_mask":torch.tensor(response_masks),
+    }
 
 def run_get_response_log_probs(
     model: torch.nn.Module,
@@ -153,7 +173,7 @@ def run_compute_group_normalized_rewards(
                 your choice of other statistics to log (e.g. mean, std, max/min
                 of rewards).
     """
-    raise NotImplementedError
+    # raise NotImplementedError
 
 
 def run_compute_policy_gradient_loss(
