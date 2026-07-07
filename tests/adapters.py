@@ -56,9 +56,17 @@ def run_tokenize_prompt_and_output(
         assert isinstance(prompt, str), "Prompt must be a string"
         assert isinstance(response, str), "Response must be a string"
         full = prompt + response
+        print(prompt)
+        print(response)
         prompt_tokens = tokenizer.encode(prompt)  # Check if tokenization works
         response_tokens = tokenizer.encode(response)  # Check if tokenization works
         full_tokens = tokenizer.encode(full)  # Check if tokenization works
+        print(prompt_tokens)
+        print(response_tokens)
+        print(full_tokens)
+        print(len(prompt_tokens))
+        print(len(response_tokens))
+        print(len(full_tokens))
         input_ids.append(full_tokens[:-1])  # All but last token
         labels.append(full_tokens[1:])  # All but first token
         response_masks.append([0] * (len(prompt_tokens)-1 ) + [1] * len(response_tokens) )  # Initialize response mask
