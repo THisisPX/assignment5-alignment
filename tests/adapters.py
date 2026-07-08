@@ -47,34 +47,55 @@ def run_tokenize_prompt_and_output(
                 with labels, with value 1 where the corresponding label token
                 is part of the response and 0 otherwise.
     """
+    from torch.nn.utils.rnn import pad_sequence
     # raise NotImplementedError
     batch_size = len(prompt_strs)
     input_ids = []
     labels = []
     response_masks = [] 
+    prompt_masks= []
+    full_tokens_batch = []
+    full_lens = []
     for prompt, response in zip(prompt_strs, output_strs):
         assert isinstance(prompt, str), "Prompt must be a string"
         assert isinstance(response, str), "Response must be a string"
         full = prompt + response
-        print(prompt)
-        print(response)
+        # print(prompt)
+        # print(response)
         prompt_tokens = tokenizer.encode(prompt)  # Check if tokenization works
-        response_tokens = tokenizer.encode(response)  # Check if tokenization works
+        response_tokens = tokenizer.encode(response)   # Check if tokenization works
         full_tokens = tokenizer.encode(full)  # Check if tokenization works
-        print(prompt_tokens)
-        print(response_tokens)
-        print(full_tokens)
-        print(len(prompt_tokens))
-        print(len(response_tokens))
-        print(len(full_tokens))
-        input_ids.append(full_tokens[:-1])  # All but last token
-        labels.append(full_tokens[1:])  # All but first token
-        response_masks.append([0] * (len(prompt_tokens)-1 ) + [1] * len(response_tokens) )  # Initialize response mask
+        # print(prompt_tokens)
+        # print(response_tokens)
+        # print(full_tokens)
+        print("prompt tokens:", prompt_tokens)
+        print("response tokens:", response_tokens)
+        print("full tokens:", full_tokens)
+        full_tokens_batch.append(torch.tensor(full_tokens))
+        full_lens.append(len(full_tokens))
+        prompt_masks.append(len(prompt_tokens))
+
+    full_tokens_batch = pad_sequence(full_tokens_batch, batch_first =True,padding_value=tokenizer.pad_token_id)
+
+
+    input_ids = full_tokens_batch[:][:-1]
+    labels = full_tokens_batch[:][1:]
+    batch_size = full_tokens_batch.shape[0]    # batch 大小
+    max_len = full_tokens_batch.shape[1]       # padded 后的序列长
+
+    prompt_lens = torch.tensor(prompt_masks).unsqueeze(1)
+    full_lens = torch.tensor(full_lens).unsqueeze(1)
+    positions = torch.arange(1,max_len).unsqueeze(0)
+    response_masks = (positions >= prompt_lens) & (positions < full_lens)
+    
+    # input_ids = torch.tensor(input_ids)
+    # labels = torch.tensor(labels)
+    # response_masks = torch.tensor(response_masks)
 
     return  {
-            "input_ids" :torch.tensor(input_ids,),
-            "labels":torch.tensor(labels),
-            "response_mask":torch.tensor(response_masks),
+            "input_ids" :input_ids,
+            "labels":labels,
+            "response_mask":response_masks,
     }
 
 def run_get_response_log_probs(
