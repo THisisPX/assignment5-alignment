@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+from tokenize import group
 from typing import Any, Callable, Literal
 
 import torch
@@ -226,7 +227,31 @@ def run_compute_group_normalized_rewards(
                 of rewards).
     """
     # raise NotImplementedError
+    from einops import rearrange
 
+    group_raw_reward = rearrange(raw_rewards,"(g n) -> g n" , n = group_size)
+    old_group_raw_reward = group_raw_reward.clone()
+    group_mean = torch.mean(group_raw_reward, dim=1, keepdim=True)   # 基线之前算
+    group_std  = torch.std(group_raw_reward, dim=1, keepdim=True)     # 基线之前算
+
+    if baseline == "mean":
+        group_raw_reward = group_raw_reward - group_mean
+    
+
+    if  advantage_normalizer == "mean" :
+        group_raw_reward = group_raw_reward / (group_mean + advantage_eps)
+
+    if advantage_normalizer == "std":
+        group_raw_reward = group_raw_reward / (group_std + advantage_eps)
+
+    group_raw_reward = rearrange(group_raw_reward, "g n -> (g n)")
+
+    max_group_raw_reward = torch.max(old_group_raw_reward).item()
+    min_group_raw_reward = torch.min(old_group_raw_reward).item()
+    mean_group_raw_reward = torch.mean(old_group_raw_reward).item()
+    std_group_raw_reward = torch.std(old_group_raw_reward).item()
+
+    return group_raw_reward , {"old_max_group_raw_reward": max_group_raw_reward, "old_min_group_raw_reward": min_group_raw_reward, "old_mean_group_raw_reward": mean_group_raw_reward, "old_std_group_raw_reward": std_group_raw_reward}
 
 def run_compute_policy_gradient_loss(
     raw_rewards_or_advantages: torch.Tensor,
