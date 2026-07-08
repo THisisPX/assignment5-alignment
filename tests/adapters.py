@@ -131,7 +131,17 @@ def run_get_response_log_probs(
                 entropy for each position (present only if
                 return_token_entropy=True).
     """
-    raise NotImplementedError
+    # raise NotImplementedError
+    output = model(input_ids)
+    logits = output.logits # shape: (batch, seq_len, vocab_size)
+
+    log_probs_full = torch.log_softmax(logits, dim=-1)
+    log_probs = torch.gather(log_probs_full, dim = -1, labels.unsqueeze(-1)).squeeze(-1) # (batch, seq_len)
+    if return_token_entropy:
+        token_entropy = -torch.sum(torch.exp(log_probs_full) * log_probs_full, dim=-1) # (batch, seq_len)
+        return {"log_probs": log_probs, "token_entropy": token_entropy}
+    else:
+        return {"log_probs": log_probs}
 
 
 def run_compute_rollout_rewards(
