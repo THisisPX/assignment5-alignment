@@ -78,15 +78,15 @@ def run_tokenize_prompt_and_output(
     full_tokens_batch = pad_sequence(full_tokens_batch, batch_first =True,padding_value=tokenizer.pad_token_id)
 
 
-    input_ids = full_tokens_batch[:][:-1]
-    labels = full_tokens_batch[:][1:]
+    input_ids = full_tokens_batch[:,:-1]
+    labels = full_tokens_batch[:,1:]
     batch_size = full_tokens_batch.shape[0]    # batch 大小
     max_len = full_tokens_batch.shape[1]       # padded 后的序列长
 
     prompt_lens = torch.tensor(prompt_masks).unsqueeze(1)
     full_lens = torch.tensor(full_lens).unsqueeze(1)
     positions = torch.arange(1,max_len).unsqueeze(0)
-    response_masks = (positions >= prompt_lens) & (positions < full_lens)
+    response_masks = ((positions >= prompt_lens) & (positions < full_lens)).int()
     
     # input_ids = torch.tensor(input_ids)
     # labels = torch.tensor(labels)
